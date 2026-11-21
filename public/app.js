@@ -69,6 +69,7 @@ function applyPreset(preset) {
 const socket = io();
 
 // ── State ──────────────────────────────────────────────────────────────────────
+let clientReady  = false;
 let contacts = [];          // [{phone, message}]
 let uploadedFile = null;    // {filename, originalname, size, mimetype}
 let csvFilename  = null;    // server filename of uploaded CSV
@@ -425,17 +426,27 @@ async function checkStatusFallback() {
   try {
     const res = await apiFetch('/api/status');
     const data = await res.json();
-    if (data.qr && !clientReady && (!document.getElementById('qr-img').src || document.getElementById('qr-img').style.display === 'none')) {
-      document.getElementById('qr-img').src = data.qr;
-      document.getElementById('qr-img').style.display = 'block';
-      document.querySelector('.qr-placeholder').style.display = 'none';
+    console.log('[Status Polling]', data);
+    if (data.qr && !clientReady) {
+      const qrImg = document.getElementById('qr-img');
+      if (qrImg.src !== data.qr) {
+        qrImg.src = data.qr;
+      }
+      qrImg.style.display = 'block';
+      const ph = document.querySelector('.qr-placeholder');
+      if (ph) ph.style.display = 'none';
       document.getElementById('qr-panel').style.display = 'flex';
-      document.getElementById('status-text').textContent = 'QR Code Ready! Scan now with WhatsApp.';
-      document.getElementById('status-text').style.color = 'var(--green)';
+      const statusTxt = document.getElementById('status-text');
+      if (statusTxt) {
+        statusTxt.textContent = 'QR Code Ready! Scan now with WhatsApp.';
+        statusTxt.style.color = '#25D366';
+      }
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error('Status check error:', e);
+  }
 }
-setInterval(checkStatusFallback, 4000);
+setInterval(checkStatusFallback, 2500);
 checkStatusFallback();
 
 // ── Init ───────────────────────────────────────────────────────────────────────
