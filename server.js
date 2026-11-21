@@ -214,8 +214,23 @@ io.on('connection', (socket) => {
 // REST API
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Public direct QR image endpoint
+app.get('/api/qr.png', async (req, res) => {
+  if (qrDataUrl) {
+    const base64Data = qrDataUrl.replace(/^data:image\/png;base64,/, '');
+    const img = Buffer.from(base64Data, 'base64');
+    res.writeHead(200, {
+      'Content-Type': 'image/png',
+      'Content-Length': img.length,
+      'Cache-Control': 'no-cache, no-store, must-revalidate'
+    });
+    return res.end(img);
+  }
+  res.status(404).send('QR not ready');
+});
+
 // Status
-app.get('/api/status', requireAuth, (req, res) => {
+app.get('/api/status', (req, res) => {
   res.json({ connected: clientReady, qr: qrDataUrl, campaign: campaignStatus });
 });
 

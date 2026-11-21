@@ -421,6 +421,16 @@ function toast(msg, type = 'info', duration = 3500) {
   setTimeout(() => t.remove(), duration);
 }
 
+// ── Refresh QR directly ───────────────────────────────────────────────────────
+function reloadQrImg() {
+  const qrImg = document.getElementById('qr-img');
+  if (qrImg && !clientReady) {
+    qrImg.src = '/api/qr.png?t=' + Date.now();
+  }
+}
+setInterval(reloadQrImg, 3000);
+reloadQrImg();
+
 // ── Periodic fallback status check ─────────────────────────────────────────────
 async function checkStatusFallback() {
   try {

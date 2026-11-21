@@ -42,8 +42,8 @@
         </div>
         <div class="qr-right">
           <div id="qr-box" class="qr-box">
+            <img id="qr-img" src="/api/qr.png" alt="Scan QR Code" onerror="this.style.display='none'; document.querySelector('.qr-placeholder').style.display='flex';" onload="this.style.display='block'; document.querySelector('.qr-placeholder').style.display='none';"/>
             <div class="qr-placeholder"><i class="fas fa-qrcode"></i><span>QR loading…</span></div>
-            <img id="qr-img" src="" alt="QR Code" style="display:none"/>
           </div>
         </div>
       </div>
