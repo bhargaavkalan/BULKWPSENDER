@@ -421,6 +421,37 @@ function toast(msg, type = 'info', duration = 3500) {
   setTimeout(() => t.remove(), duration);
 }
 
+// ── Direct QR updater ─────────────────────────────────────────────────────────
+async function fetchAndShowQr() {
+  if (clientReady) return;
+  try {
+    const res = await fetch('/api/status');
+    const data = await res.json();
+    if (data.qr) {
+      const qrImg = document.getElementById('qr-img');
+      const placeholder = document.getElementById('qr-placeholder');
+      const statusTxt = document.getElementById('status-text');
+      
+      if (qrImg) {
+        qrImg.src = data.qr;
+        qrImg.style.display = 'block';
+      }
+      if (placeholder) {
+        placeholder.style.display = 'none';
+      }
+      if (statusTxt) {
+        statusTxt.textContent = 'QR Code Ready! Scan now with WhatsApp.';
+        statusTxt.style.color = '#25D366';
+      }
+    }
+  } catch (err) {
+    console.warn('QR poll error:', err);
+  }
+}
+
+setInterval(fetchAndShowQr, 2000);
+fetchAndShowQr();
+
 // ── Refresh QR directly ───────────────────────────────────────────────────────
 function reloadQrImg() {
   const qrImg = document.getElementById('qr-img');
