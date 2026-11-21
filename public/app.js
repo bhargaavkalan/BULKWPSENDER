@@ -88,11 +88,14 @@ document.querySelectorAll('.nav-item').forEach(el => {
 
 // ── Socket events ──────────────────────────────────────────────────────────────
 socket.on('qr', qrDataUrl => {
+  console.log('[App] QR received via WebSocket');
   document.getElementById('qr-img').src = qrDataUrl;
   document.getElementById('qr-img').style.display = 'block';
   document.querySelector('.qr-placeholder').style.display = 'none';
   document.getElementById('qr-panel').style.display = 'flex';
   document.getElementById('connected-panel').style.display = 'none';
+  document.getElementById('status-text').textContent = 'QR Code Ready! Scan now with WhatsApp.';
+  document.getElementById('status-text').style.color = 'var(--green)';
 });
 
 socket.on('ready', info => {
@@ -416,6 +419,24 @@ function toast(msg, type = 'info', duration = 3500) {
   document.getElementById('toasts').appendChild(t);
   setTimeout(() => t.remove(), duration);
 }
+
+// ── Periodic fallback status check ─────────────────────────────────────────────
+async function checkStatusFallback() {
+  try {
+    const res = await apiFetch('/api/status');
+    const data = await res.json();
+    if (data.qr && !clientReady && (!document.getElementById('qr-img').src || document.getElementById('qr-img').style.display === 'none')) {
+      document.getElementById('qr-img').src = data.qr;
+      document.getElementById('qr-img').style.display = 'block';
+      document.querySelector('.qr-placeholder').style.display = 'none';
+      document.getElementById('qr-panel').style.display = 'flex';
+      document.getElementById('status-text').textContent = 'QR Code Ready! Scan now with WhatsApp.';
+      document.getElementById('status-text').style.color = 'var(--green)';
+    }
+  } catch (e) {}
+}
+setInterval(checkStatusFallback, 4000);
+checkStatusFallback();
 
 // ── Init ───────────────────────────────────────────────────────────────────────
 renderContacts();

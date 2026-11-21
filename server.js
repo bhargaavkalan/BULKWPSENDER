@@ -75,6 +75,29 @@ let qrDataUrl = null;
 let campaignStatus = { running: false, total: 0, sent: 0, failed: 0, log: [] };
 
 function createClient() {
+  const puppeteerOpts = {
+    headless: true,
+    timeout: 0,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-accelerated-2d-canvas',
+      '--no-first-run',
+      '--no-zygote',
+      '--single-process',
+      '--disable-gpu',
+      '--window-size=1280,720'
+    ]
+  };
+
+  // If running in Docker / Linux container with system Chromium installed
+  if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+    puppeteerOpts.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+  } else if (process.platform === 'linux' && fs.existsSync('/usr/bin/chromium')) {
+    puppeteerOpts.executablePath = '/usr/bin/chromium';
+  }
+
   client = new Client({
     authStrategy: new LocalAuth({ dataPath: path.join(__dirname, '.wwebjs_auth') }),
     webVersion: '2.3000.1017054136-alpha',
@@ -82,20 +105,7 @@ function createClient() {
       type: 'remote',
       remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.3000.1017054136-alpha.html',
     },
-    puppeteer: {
-      headless: true,
-      timeout: 0,           // no overall timeout
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu',
-        '--window-size=1280,720'
-      ]
-    }
+    puppeteer: puppeteerOpts
   });
 
   client.on('qr', async (qr) => {
@@ -206,7 +216,7 @@ io.on('connection', (socket) => {
 
 // Status
 app.get('/api/status', requireAuth, (req, res) => {
-  res.json({ connected: clientReady, campaign: campaignStatus });
+  res.json({ connected: clientReady, qr: qrDataUrl, campaign: campaignStatus });
 });
 
 // Get full campaign log (for debugging)
