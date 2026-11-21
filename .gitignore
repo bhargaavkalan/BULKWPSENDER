@@ -1,0 +1,12 @@
+# .gitignore
+node_modules/
+npm-debug.log
+.env
+.DS_Store
+
+# WhatsApp Session & Cache (DO NOT commit credentials or session data)
+.wwebjs_auth/
+.wwebjs_cache/
+
+# Uploads
+uploads/

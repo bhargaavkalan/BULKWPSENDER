@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BulkWhatsApp Messenger</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <i class="fa-brands fa-whatsapp"></i>
+      <span>BulkWA</span>
+    </div>
+    <nav>
+      <a href="#" class="nav-item active" data-tab="dashboard"><i class="fas fa-gauge-high"></i> Dashboard</a>
+      <a href="#" class="nav-item" data-tab="compose"><i class="fas fa-paper-plane"></i> Compose</a>
+      <a href="#" class="nav-item" data-tab="csv"><i class="fas fa-file-csv"></i> CSV Import</a>
+      <a href="#" class="nav-item" data-tab="logs"><i class="fas fa-list-check"></i> Logs</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div id="conn-badge" class="badge disconnected"><i class="fas fa-circle"></i> Disconnected</div>
+      <button id="btn-logout" class="btn btn-sm btn-danger" style="display:none"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ── DASHBOARD ── -->
+    <section id="tab-dashboard" class="tab active">
+      <div class="page-header"><h1>Dashboard</h1></div>
+
+      <!-- QR / Connected panel -->
+      <div id="qr-panel" class="card qr-card">
+        <div class="qr-left">
+          <h2>Connect WhatsApp</h2>
+          <p>Open WhatsApp on your phone → <strong>Linked Devices</strong> → <strong>Link a Device</strong> → scan the QR code.</p>
+          <div id="status-text" class="status-text">Initialising…</div>
+        </div>
+        <div class="qr-right">
+          <div id="qr-box" class="qr-box">
+            <div class="qr-placeholder"><i class="fas fa-qrcode"></i><span>QR loading…</span></div>
+            <img id="qr-img" src="" alt="QR Code" style="display:none"/>
+          </div>
+        </div>
+      </div>
+
+      <div id="connected-panel" class="card connected-card" style="display:none">
+        <div class="connected-icon"><i class="fa-brands fa-whatsapp"></i></div>
+        <div>
+          <h2 id="wa-name">WhatsApp</h2>
+          <p id="wa-number" class="muted"></p>
+          <span class="badge connected"><i class="fas fa-circle"></i> Connected</span>
+        </div>
+      </div>
+
+      <!-- Anti-Ban Status Banner -->
+      <div id="antibан-banner" class="card antibан-banner" style="display:none">
+        <i class="fas fa-shield-halved"></i>
+        <span id="antibан-reason">Anti-ban pause active…</span>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+          <div><div id="stat-sent" class="stat-num">0</div><div class="stat-label">Sent</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red"><i class="fas fa-times-circle"></i></div>
+          <div><div id="stat-failed" class="stat-num">0</div><div class="stat-label">Failed</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+          <div><div id="stat-total" class="stat-num">0</div><div class="stat-label">Total</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange"><i class="fas fa-spinner"></i></div>
+          <div><div id="stat-status" class="stat-num">Idle</div><div class="stat-label">Campaign</div></div>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="card" id="progress-section" style="display:none">
+        <div class="progress-header">
+          <span id="progress-label">Sending…</span>
+          <span id="progress-pct">0%</span>
+        </div>
+        <div class="progress-bar-wrap"><div id="progress-bar" class="progress-bar" style="width:0%"></div></div>
+        <button id="btn-stop" class="btn btn-danger mt-1"><i class="fas fa-stop"></i> Stop Campaign</button>
+      </div>
+
+      <!-- 🛡️ Anti-Ban Settings -->
+      <div class="card">
+        <div class="section-header" onclick="toggleAntiBan()">
+          <span><i class="fas fa-shield-halved" style="color:var(--green)"></i> &nbsp;Anti-Ban Protection Settings</span>
+          <i id="antibан-chevron" class="fas fa-chevron-down"></i>
+        </div>
+        <div id="antibан-panel" class="antibан-panel">
+          <div class="antibан-grid">
+
+            <div class="ab-toggle-row">
+              <label class="toggle-label">
+                <span><i class="fas fa-power-off"></i> Enable Anti-Ban</span>
+                <label class="switch"><input type="checkbox" id="ab-enabled" checked onchange="syncAntiBan()"/><span class="slider"></span></label>
+              </label>
+            </div>
+
+            <div class="ab-toggle-row">
+              <label class="toggle-label">
+                <span><i class="fas fa-keyboard"></i> Simulate Typing</span>
+                <label class="switch"><input type="checkbox" id="ab-typing" checked onchange="syncAntiBan()"/><span class="slider"></span></label>
+              </label>
+            </div>
+
+            <div class="ab-toggle-row">
+              <label class="toggle-label">
+                <span><i class="fas fa-shuffle"></i> Shuffle Recipients</span>
+                <label class="switch"><input type="checkbox" id="ab-shuffle" onchange="syncAntiBan()"/><span class="slider"></span></label>
+              </label>
+            </div>
+
+            <div class="ab-toggle-row">
+              <label class="toggle-label">
+                <span><i class="fas fa-code-branch"></i> Spintax Messages</span>
+                <label class="switch"><input type="checkbox" id="ab-spintax" onchange="syncAntiBan()"/><span class="slider"></span></label>
+              </label>
+            </div>
+
+          </div>
+
+          <div class="ab-fields">
+
+            <div class="ab-field">
+              <label class="label"><i class="fas fa-clock"></i> Min Delay (ms)</label>
+              <input id="ab-min-delay" type="number" class="inp" value="4000" min="1000" max="60000" onchange="syncAntiBan()"/>
+              <span class="ab-hint">≥ 4 s recommended</span>
+            </div>
+
+            <div class="ab-field">
+              <label class="label"><i class="fas fa-clock"></i> Max Delay (ms)</label>
+              <input id="ab-max-delay" type="number" class="inp" value="12000" min="1000" max="120000" onchange="syncAntiBan()"/>
+              <span class="ab-hint">Random between min–max</span>
+            </div>
+
+            <div class="ab-field">
+              <label class="label"><i class="fas fa-layer-group"></i> Batch Size</label>
+              <input id="ab-batch" type="number" class="inp" value="20" min="1" max="500" onchange="syncAntiBan()"/>
+              <span class="ab-hint">Messages before cool-down</span>
+            </div>
+
+            <div class="ab-field">
+              <label class="label"><i class="fas fa-mug-hot"></i> Batch Break Min (ms)</label>
+              <input id="ab-break-min" type="number" class="inp" value="30000" min="5000" onchange="syncAntiBan()"/>
+              <span class="ab-hint">Min cool-down (30 s default)</span>
+            </div>
+
+            <div class="ab-field">
+              <label class="label"><i class="fas fa-mug-hot"></i> Batch Break Max (ms)</label>
+              <input id="ab-break-max" type="number" class="inp" value="60000" min="5000" onchange="syncAntiBan()"/>
+              <span class="ab-hint">Max cool-down (60 s default)</span>
+            </div>
+
+            <div class="ab-field">
+              <label class="label"><i class="fas fa-gauge-high"></i> Max Per Hour</label>
+              <input id="ab-max-hour" type="number" class="inp" value="100" min="1" max="1000" onchange="syncAntiBan()"/>
+              <span class="ab-hint">Hard rate limit (100 safe)</span>
+            </div>
+
+          </div>
+
+          <!-- Preset buttons -->
+          <div class="ab-presets">
+            <span class="label">Presets:</span>
+            <button class="btn btn-outline btn-sm" onclick="applyPreset('safe')"><i class="fas fa-shield"></i> Safe</button>
+            <button class="btn btn-outline btn-sm" onclick="applyPreset('balanced')"><i class="fas fa-scale-balanced"></i> Balanced</button>
+            <button class="btn btn-outline btn-sm" onclick="applyPreset('fast')"><i class="fas fa-bolt"></i> Fast</button>
+          </div>
+
+          <!-- Info box -->
+          <div class="ab-info">
+            <i class="fas fa-circle-info"></i>
+            <div>
+              <strong>Spintax</strong> — randomise your message: <code>{Hello|Hi|Hey} {friend|there}!</code> sends a different variant to each contact, reducing detection.<br/>
+              <strong>Shuffle</strong> — randomises send order so patterns aren't obvious.<br/>
+              <strong>Typing simulation</strong> — makes the bot look like a real human typing.
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ── COMPOSE ── -->
+    <section id="tab-compose" class="tab">
+      <div class="page-header"><h1>Compose Message</h1></div>
+
+      <div class="two-col">
+        <!-- Left: contacts -->
+        <div class="card">
+          <h3><i class="fas fa-address-book"></i> Recipients</h3>
+          <p class="muted">Enter phone numbers with country code (e.g. 919876543210)</p>
+          <div id="contacts-list" class="contacts-list"></div>
+          <div class="add-row">
+            <input id="new-phone" type="text" placeholder="Phone (with country code)" class="inp"/>
+            <input id="new-msg-override" type="text" placeholder="Custom message (optional)" class="inp"/>
+            <button class="btn btn-green" onclick="addContact()"><i class="fas fa-plus"></i> Add</button>
+          </div>
+          <div class="mt-1 row-gap">
+            <button class="btn btn-outline" onclick="pasteNumbers()"><i class="fas fa-paste"></i> Paste Numbers</button>
+            <button class="btn btn-outline-danger" onclick="clearContacts()"><i class="fas fa-trash"></i> Clear All</button>
+          </div>
+          <div class="mt-1">
+            <label class="label">Or paste a list (one per line):</label>
+            <textarea id="bulk-paste" rows="4" class="inp" placeholder="919876543210&#10;918765432109&#10;…"></textarea>
+            <button class="btn btn-outline mt-1" onclick="loadPasted()"><i class="fas fa-upload"></i> Load Numbers</button>
+          </div>
+        </div>
+
+        <!-- Right: message + file -->
+        <div class="card">
+          <h3><i class="fas fa-message"></i> Message</h3>
+          <label class="label">Default Message</label>
+          <textarea id="default-message" rows="5" class="inp" placeholder="Type your message here…&#10;&#10;Supports emojis 😊 and multiple lines."></textarea>
+
+          <div class="mt-1">
+            <label class="label"><i class="fas fa-paperclip"></i> Attach File (optional)</label>
+            <div id="file-drop-zone" class="drop-zone" ondragover="onDragOver(event)" ondrop="onDrop(event)" onclick="document.getElementById('file-input').click()">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <span id="drop-label">Drag & drop any file here, or click to browse</span>
+              <span class="muted" style="font-size:0.75rem">Images · Videos · PDFs · Documents · Audio · Any file up to 64 MB</span>
+            </div>
+            <input id="file-input" type="file" style="display:none" onchange="handleFileSelect(this)"/>
+            <div id="file-preview" class="file-preview" style="display:none">
+              <i id="file-icon" class="fas fa-file"></i>
+              <span id="file-name"></span>
+              <span id="file-size" class="muted"></span>
+              <button class="btn-icon btn-danger-icon" onclick="removeFile()" title="Remove"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="mt-1" id="caption-row" style="display:none">
+              <label class="label">File Caption (optional — overrides message as caption)</label>
+              <input id="file-caption" type="text" class="inp" placeholder="Caption shown with the file…"/>
+            </div>
+          </div>
+
+          <div class="mt-1">
+            <label class="label"><i class="fas fa-clock"></i> Delay between messages (ms)</label>
+            <input id="delay" type="number" class="inp" value="2000" min="500" max="30000"/>
+          </div>
+
+          <button id="btn-send" class="btn btn-green btn-lg mt-1" onclick="startCampaign()">
+            <i class="fas fa-paper-plane"></i> Send Bulk Messages
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── CSV IMPORT ── -->
+    <section id="tab-csv" class="tab">
+      <div class="page-header"><h1>CSV Import</h1></div>
+      <div class="two-col">
+        <div class="card">
+          <h3><i class="fas fa-file-csv"></i> Upload CSV</h3>
+          <div class="info-box">
+            <strong>CSV Format:</strong>
+            <pre>phone,message
+919876543210,Hello John!
+918765432109,Hi there!</pre>
+            <p class="muted">Columns: <code>phone</code> (required) · <code>message</code> (optional — falls back to default message below)</p>
+          </div>
+          <div id="csv-drop-zone" class="drop-zone" ondragover="onDragOver(event)" ondrop="onDropCsv(event)" onclick="document.getElementById('csv-input').click()">
+            <i class="fas fa-file-csv"></i>
+            <span id="csv-drop-label">Drag & drop CSV here, or click to browse</span>
+          </div>
+          <input id="csv-input" type="file" accept=".csv,.txt" style="display:none" onchange="handleCsvSelect(this)"/>
+          <div id="csv-preview" class="csv-preview mt-1" style="display:none">
+            <div class="csv-info">
+              <i class="fas fa-check-circle green"></i>
+              <span id="csv-info-text"></span>
+              <button class="btn-icon btn-danger-icon" onclick="removeCsv()"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="csv-table-wrap" class="csv-table-wrap"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3><i class="fas fa-message"></i> Message & File</h3>
+          <label class="label">Default Message <span class="muted">(used if CSV has no message column)</span></label>
+          <textarea id="csv-default-message" rows="4" class="inp" placeholder="Hello! This is a bulk message."></textarea>
+
+          <div class="mt-1">
+            <label class="label"><i class="fas fa-paperclip"></i> Attach File (optional)</label>
+            <div id="csv-file-drop-zone" class="drop-zone" ondragover="onDragOver(event)" ondrop="onDropCsvFile(event)" onclick="document.getElementById('csv-file-input').click()">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <span id="csv-file-drop-label">Drag & drop any file here, or click to browse</span>
+            </div>
+            <input id="csv-file-input" type="file" style="display:none" onchange="handleCsvFileSelect(this)"/>
+            <div id="csv-file-preview" class="file-preview" style="display:none">
+              <i id="csv-file-icon" class="fas fa-file"></i>
+              <span id="csv-file-name"></span>
+              <span id="csv-file-size" class="muted"></span>
+              <button class="btn-icon btn-danger-icon" onclick="removeCsvFile()"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="csv-caption-row" class="mt-1" style="display:none">
+              <input id="csv-file-caption" type="text" class="inp" placeholder="File caption…"/>
+            </div>
+          </div>
+
+          <div class="mt-1">
+            <label class="label"><i class="fas fa-clock"></i> Delay (ms)</label>
+            <input id="csv-delay" type="number" class="inp" value="2000" min="500" max="30000"/>
+          </div>
+          <button class="btn btn-green btn-lg mt-1" onclick="startCsvCampaign()">
+            <i class="fas fa-paper-plane"></i> Send CSV Campaign
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── LOGS ── -->
+    <section id="tab-logs" class="tab">
+      <div class="page-header">
+        <h1>Message Logs</h1>
+        <button class="btn btn-outline" onclick="clearLogs()"><i class="fas fa-trash"></i> Clear</button>
+      </div>
+      <div class="card">
+        <div id="log-table-wrap">
+          <table class="log-table">
+            <thead><tr><th>#</th><th>Phone</th><th>Status</th><th>Time</th><th>Details</th></tr></thead>
+            <tbody id="log-body"><tr><td colspan="5" class="muted text-center">No messages sent yet.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Toast container -->
+  <div id="toasts"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
