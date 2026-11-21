@@ -345,6 +345,31 @@
   <div id="toasts"></div>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=2.5"></script>
+  <script>
+    // Direct QR loader that runs immediately without waiting for anything else
+    async function forceLoadQr() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        if (data.qr) {
+          const img = document.getElementById('qr-img');
+          const ph = document.getElementById('qr-placeholder');
+          const txt = document.getElementById('status-text');
+          if (img) {
+            img.src = data.qr;
+            img.style.display = 'block';
+          }
+          if (ph) ph.style.display = 'none';
+          if (txt) {
+            txt.textContent = 'Scan QR code with WhatsApp';
+            txt.style.color = '#25D366';
+          }
+        }
+      } catch (e) {}
+    }
+    setInterval(forceLoadQr, 2000);
+    forceLoadQr();
+  </script>
 </body>
 </html>
